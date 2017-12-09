@@ -4,7 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Splat.iml" filepath="$PROJECT_DIR$/Splat.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/shapelibrary_debug/shapelibrary_debug.iml" filepath="$PROJECT_DIR$/shapelibrary_debug/shapelibrary_debug.iml" />
+      <module fileurl="file://$PROJECT_DIR$/shapelibrary/shapelibrary.iml" filepath="$PROJECT_DIR$/shapelibrary/shapelibrary.iml" />
     </modules>
   </component>
 </project>
