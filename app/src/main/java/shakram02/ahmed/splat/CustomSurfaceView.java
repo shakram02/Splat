@@ -57,4 +57,12 @@ public class CustomSurfaceView extends GLSurfaceView {
 
         return true;
     }
+
+    public void handleTouchPress(float normalizedX, float normalizedY) {
+
+    }
+
+    public void handleTouchDrag(float normalizedX, float normalizedY) {
+
+    }
 }
