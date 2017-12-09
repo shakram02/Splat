@@ -1,5 +1,6 @@
 package shakram02.ahmed.splat;
 
+import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
@@ -16,6 +17,7 @@ import shakram02.ahmed.shapelibrary.gl_internals.memory.VertexBufferObject;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Axis;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Circle;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Rectangle;
+import shakram02.ahmed.splat.utils.TextResourceReader;
 
 
 /**
@@ -26,10 +28,16 @@ import shakram02.ahmed.shapelibrary.gl_internals.shapes.Rectangle;
 
 public class BasicRenderer implements GLSurfaceView.Renderer {
     private final int XYZ_POINT_LENGTH = 3;
+    private final Context context;
     private Circle moonCircle;
     private Circle earthCircle;
     private Circle sunCircle;
     private Rectangle rectangle;
+
+    BasicRenderer(Context context) {
+
+        this.context = context;
+    }
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
@@ -51,29 +59,19 @@ public class BasicRenderer implements GLSurfaceView.Renderer {
         final float upY = 1.0f;
         final float upZ = 0.0f;
 
-        float earthColor[] = {0.13671875f, 0.26953125f, 0.92265625f, 0.0f};
-        float sunColor[] = {0.93671875f, 0.76953125f, 0.12265625f, 0.0f};
-        float moonColor[] = {0.93671875f, 0.73671875f, 0.63671875f, 0.0f};
+        float earthColor[] = {0.13671875f, 0.26953125f, 0.92265625f, 1.0f};
+        float sunColor[] = {0.93671875f, 0.76953125f, 0.12265625f, 1.0f};
+        float moonColor[] = {0.93671875f, 0.73671875f, 0.63671875f, 1.0f};
         float[] mViewMatrix = new float[16];
 
         Matrix.setLookAtM(mViewMatrix, 0, eyeX, eyeY, eyeZ, lookX,
                 lookY, lookZ, upX, upY, upZ);
 
-        String vertexShader = "" +
-                "uniform mat4 u_MVPMatrix;      \n"
-                + "attribute vec4 a_Position;     \n"
+        String vertexShader = TextResourceReader
+                .readTextFileFromResource(context, R.raw.simple_vertex_shader);
 
-                + "void main()                    \n"
-                + "{                              \n"
-                + "   gl_Position = u_MVPMatrix * a_Position;   \n"
-                + "}";
-
-        String fragmentShader = "precision mediump float;       \n"
-                + "uniform vec4 v_Color;          \n"
-                + "void main()                    \n"
-                + "{                              \n"
-                + "   gl_FragColor = v_Color;     \n"
-                + "}                              \n";
+        String fragmentShader = TextResourceReader
+                .readTextFileFromResource(context, R.raw.simple_fragment_shader);
 
         GLProgram program = new GLProgram(vertexShader, fragmentShader);
         String positionVariableName = "a_Position";

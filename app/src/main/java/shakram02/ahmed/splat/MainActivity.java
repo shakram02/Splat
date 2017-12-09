@@ -26,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
         mGLSurfaceView = new CustomSurfaceView(this);
         mGLSurfaceView.setEGLContextClientVersion(2);
         // Request an OpenGL ES 2.0 compatible context.
-        mGLSurfaceView.setRenderer(new BasicRenderer());
+        mGLSurfaceView.setRenderer(new BasicRenderer(this));
 
         setContentView(mGLSurfaceView);
     }
