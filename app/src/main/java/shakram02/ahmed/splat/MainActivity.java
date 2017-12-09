@@ -11,14 +11,14 @@ import android.view.MotionEvent;
 import android.view.View;
 
 public class MainActivity extends AppCompatActivity {
-    private CustomSurfaceView mGLSurfaceView;
+    private BasicRenderer renderer;
 
-    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         final ActivityManager activityManager =
                 (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        assert activityManager != null;
         final ConfigurationInfo configurationInfo = activityManager.getDeviceConfigurationInfo();
         final boolean supportsEs2 = configurationInfo.reqGlEsVersion >= 0x2000;
 
@@ -28,22 +28,26 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        mGLSurfaceView = new CustomSurfaceView(this);
+        GLSurfaceView mGLSurfaceView = new GLSurfaceView(this);
         mGLSurfaceView.setEGLContextClientVersion(2);
+        renderer = new BasicRenderer(this);
         // Request an OpenGL ES 2.0 compatible context.
-        mGLSurfaceView.setRenderer(new BasicRenderer(this));
-        mGLSurfaceView.setOnTouchListener(new GLSurfaceTouchListener(mGLSurfaceView));
+        mGLSurfaceView.setRenderer(renderer);
+        mGLSurfaceView.setOnTouchListener(new GLSurfaceTouchListener(mGLSurfaceView, renderer));
 
         setContentView(mGLSurfaceView);
     }
 
     static class GLSurfaceTouchListener implements View.OnTouchListener {
-        CustomSurfaceView mGLSurfaceView;
+        private final GLSurfaceView view;
+        BasicRenderer renderer;
 
-        GLSurfaceTouchListener(CustomSurfaceView mGLSurfaceView) {
-            this.mGLSurfaceView = mGLSurfaceView;
+        GLSurfaceTouchListener(GLSurfaceView view, BasicRenderer renderer) {
+            this.view = view;
+            this.renderer = renderer;
         }
 
+        @SuppressLint("ClickableViewAccessibility")
         @Override
         public boolean onTouch(View v, MotionEvent event) {
             if (event == null) {
@@ -59,17 +63,17 @@ public class MainActivity extends AppCompatActivity {
                     -((event.getY() / (float) v.getHeight()) * 2 - 1);
 
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                mGLSurfaceView.queueEvent(new Runnable() {
+                view.queueEvent(new Runnable() {
                     @Override
                     public void run() {
-                        mGLSurfaceView.handleTouchPress(normalizedX, normalizedY);
+                        renderer.handleTouchPress(normalizedX, normalizedY);
                     }
                 });
             } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
-                mGLSurfaceView.queueEvent(new Runnable() {
+                view.queueEvent(new Runnable() {
                     @Override
                     public void run() {
-                        mGLSurfaceView.handleTouchDrag(normalizedX, normalizedY);
+                        renderer.handleTouchDrag(normalizedX, normalizedY);
                     }
                 });
             }

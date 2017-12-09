@@ -3,6 +3,7 @@ package shakram02.ahmed.shapelibrary.gl_internals.shapes;
 import android.opengl.GLES20;
 
 import shakram02.ahmed.shapelibrary.gl_internals.Painter;
+import shakram02.ahmed.shapelibrary.gl_internals.ShapeMaker;
 import shakram02.ahmed.shapelibrary.gl_internals.memory.VertexBufferObject;
 
 /**
@@ -10,18 +11,18 @@ import shakram02.ahmed.shapelibrary.gl_internals.memory.VertexBufferObject;
  */
 
 public class Rectangle extends DrawableObject {
-    public Rectangle(float[] viewMatrix, int mvpHandle, VertexBufferObject vertices, Painter painter) {
-        super(viewMatrix, mvpHandle, vertices, painter);
+    public Rectangle(float cx, float cy, float width, float height, float[] viewMatrix, int mvpHandle,
+                     int verticesHandle,
+                     int colorHandle, float[] colorPoints) {
+
+        super(mvpHandle, viewMatrix, new Raster(
+                verticesHandle, ShapeMaker.createRectangle(cx, cy, width, height),
+                colorHandle, colorPoints
+        ));
     }
 
     @Override
-    public void draw() {
-        this.painter.paint();
-        this.vertices.startDraw();
-
-        GLES20.glUniformMatrix4fv(super.mvpHandle, 1, false, super.getMvpMatrix(), 0);
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, this.vertices.getItemCount());
-
-        this.vertices.endDraw();
+    protected void issueDraw() {
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, raster.getItemCount());
     }
 }

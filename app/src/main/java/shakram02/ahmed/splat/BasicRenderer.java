@@ -5,15 +5,14 @@ import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.SystemClock;
+import android.util.Log;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import shakram02.ahmed.shapelibrary.gl_internals.FrustumManager;
 import shakram02.ahmed.shapelibrary.gl_internals.ShapeMaker;
-import shakram02.ahmed.shapelibrary.gl_internals.UniformPainter;
 import shakram02.ahmed.shapelibrary.gl_internals.memory.GLProgram;
-import shakram02.ahmed.shapelibrary.gl_internals.memory.VertexBufferObject;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Axis;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Circle;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Rectangle;
@@ -32,7 +31,7 @@ public class BasicRenderer implements GLSurfaceView.Renderer {
     private Circle moonCircle;
     private Circle earthCircle;
     private Circle sunCircle;
-    private Rectangle rectangle;
+//    private Rectangle rectangle;
 
     BasicRenderer(Context context) {
 
@@ -85,26 +84,22 @@ public class BasicRenderer implements GLSurfaceView.Renderer {
         // Tell OpenGL to use this program when rendering.
         program.activate();
 
-        float circlePoints[] = ShapeMaker.CreateCirclePoints(0, 0, 0.3f, 120);
         Integer colorHandle = program.getVariableHandle(colorVariableName);
         Integer mvpHandle = program.getVariableHandle(mvpMatrixVariableName);
-        Integer positionHandle = program.getVariableHandle(positionVariableName);
+        Integer verticesHandle = program.getVariableHandle(positionVariableName);
 
-        UniformPainter moonPainter = new UniformPainter(colorHandle, moonColor);
-        UniformPainter earthPainter = new UniformPainter(colorHandle, earthColor);
-        UniformPainter sunPainter = new UniformPainter(colorHandle, sunColor);
 
-        VertexBufferObject circleVertices = new VertexBufferObject(circlePoints,
-                positionHandle, XYZ_POINT_LENGTH);
+        sunCircle = new Circle(0, 0, 0.3f, mViewMatrix,
+                mvpHandle, verticesHandle, colorHandle, sunColor);
+        moonCircle = new Circle(0, 0, 0.3f, mViewMatrix,
+                mvpHandle, verticesHandle, colorHandle, moonColor);
+        earthCircle = new Circle(0, 0, 0.3f, mViewMatrix,
+                mvpHandle, verticesHandle, colorHandle, earthColor);
 
-        sunCircle = new Circle(mViewMatrix, mvpHandle, circleVertices, sunPainter);
-        moonCircle = new Circle(mViewMatrix, mvpHandle, circleVertices, moonPainter);
-        earthCircle = new Circle(mViewMatrix, mvpHandle, circleVertices, earthPainter);
-
-        VertexBufferObject rectVertices = new VertexBufferObject(
-                ShapeMaker.createRectangle(0f, 0f, 0.4f, 0.2f),
-                positionHandle, 3);
-        rectangle = new Rectangle(mViewMatrix, mvpHandle, rectVertices, sunPainter);
+//        VertexBufferObject rectVertices = new VertexBufferObject(
+//                ShapeMaker.createRectangle(0f, 0f, 0.4f, 0.2f),
+//                verticesHandle, 3);
+//        rectangle = new Rectangle(mViewMatrix, mvpHandle, rectVertices, sunPainter);
     }
 
     @Override
@@ -115,19 +110,7 @@ public class BasicRenderer implements GLSurfaceView.Renderer {
         moonCircle.setProjectionMatrix(mProjectionMatrix);
         earthCircle.setProjectionMatrix(mProjectionMatrix);
         sunCircle.setProjectionMatrix(mProjectionMatrix);
-        rectangle.setProjectionMatrix(mProjectionMatrix);
-    }
-
-    void moveRight() {
-    }
-
-    void moveLeft() {
-    }
-
-    void moveUp() {
-    }
-
-    void moveDown() {
+//        rectangle.setProjectionMatrix(mProjectionMatrix);
     }
 
     @Override
@@ -161,6 +144,15 @@ public class BasicRenderer implements GLSurfaceView.Renderer {
         moonCircle.draw();
 
         sunCircle.draw();
-        rectangle.draw();
+//        rectangle.draw();
+    }
+
+
+    void handleTouchPress(float normalizedX, float normalizedY) {
+        Log.w("TTTTT", "Touched at:" + normalizedX);
+    }
+
+    void handleTouchDrag(float normalizedX, float normalizedY) {
+
     }
 }

@@ -9,9 +9,11 @@ import android.opengl.Matrix;
  * to be scaled, rotated and translated
  */
 
-public abstract class Transform {
+public class Transform {
     // We're using homogeneous coordinates 4-d
     private static final int TRANSFORM_MATRIX_DIMENSIONS = 16;
+    protected final int XYZ_POINT_LENGTH = 3;
+
     private float[] modelMatrix;
     private float[] mvpMatrix = new float[TRANSFORM_MATRIX_DIMENSIONS];
     private float[] viewMatrix;

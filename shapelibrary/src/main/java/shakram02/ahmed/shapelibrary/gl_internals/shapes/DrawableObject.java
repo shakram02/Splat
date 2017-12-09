@@ -1,7 +1,6 @@
 package shakram02.ahmed.shapelibrary.gl_internals.shapes;
 
-import shakram02.ahmed.shapelibrary.gl_internals.Painter;
-import shakram02.ahmed.shapelibrary.gl_internals.memory.VertexBufferObject;
+import android.opengl.GLES20;
 
 /**
  * A shape that can be drawn, this class wraps the draw functions
@@ -10,20 +9,23 @@ import shakram02.ahmed.shapelibrary.gl_internals.memory.VertexBufferObject;
 
 public abstract class DrawableObject extends Transform {
 
+    private final int mvpHandle;
+    final Raster raster;
 
-    final int mvpHandle;
-    final VertexBufferObject vertices;
-    final Painter painter;
-
-    DrawableObject(float[] viewMatrix, int mvpHandle,
-                   VertexBufferObject vertices,
-                   Painter painter) {
+    DrawableObject(int mvpHandle, float[] viewMatrix, Raster raster) {
         super(viewMatrix);
+        this.raster = raster;
         this.mvpHandle = mvpHandle;
-
-        this.vertices = vertices;
-        this.painter = painter;
     }
 
-    public abstract void draw();
+    public final void draw() {
+        raster.startDraw();
+        GLES20.glUniformMatrix4fv(this.mvpHandle, 1, false, super.getMvpMatrix(), 0);
+        this.issueDraw();
+        raster.endDraw();
+    }
+
+    protected abstract void issueDraw();
+
+//    public abstract boolean intersects(float x, float y);
 }
