@@ -1,17 +1,21 @@
 package shakram02.ahmed.splat;
 
 import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.SystemClock;
 import android.util.Log;
 
+import java.util.Arrays;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import shakram02.ahmed.shapelibrary.gl_internals.FrustumManager;
-import shakram02.ahmed.shapelibrary.gl_internals.ShapeMaker;
 import shakram02.ahmed.shapelibrary.gl_internals.memory.GLProgram;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Axis;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Circle;
@@ -25,16 +29,14 @@ import shakram02.ahmed.splat.utils.TextResourceReader;
  * OpenGL lesson 1
  */
 
-public class BasicRenderer implements GLSurfaceView.Renderer {
-    private final int XYZ_POINT_LENGTH = 3;
+public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListener {
     private final Context context;
     private Circle moonCircle;
     private Circle earthCircle;
     private Circle sunCircle;
-//    private Rectangle rectangle;
+    private Rectangle rectangle;
 
     BasicRenderer(Context context) {
-
         this.context = context;
     }
 
@@ -89,17 +91,15 @@ public class BasicRenderer implements GLSurfaceView.Renderer {
         Integer verticesHandle = program.getVariableHandle(positionVariableName);
 
 
-        sunCircle = new Circle(0, 0, 0.3f, mViewMatrix,
+        sunCircle = new Circle(0, 0, 0.38f, mViewMatrix,
                 mvpHandle, verticesHandle, colorHandle, sunColor);
-        moonCircle = new Circle(0, 0, 0.3f, mViewMatrix,
-                mvpHandle, verticesHandle, colorHandle, moonColor);
-        earthCircle = new Circle(0, 0, 0.3f, mViewMatrix,
+        earthCircle = new Circle(0, 0, 0.32f, mViewMatrix,
                 mvpHandle, verticesHandle, colorHandle, earthColor);
+        moonCircle = new Circle(0, 0, 0.27f, mViewMatrix,
+                mvpHandle, verticesHandle, colorHandle, moonColor);
 
-//        VertexBufferObject rectVertices = new VertexBufferObject(
-//                ShapeMaker.createRectangle(0f, 0f, 0.4f, 0.2f),
-//                verticesHandle, 3);
-//        rectangle = new Rectangle(mViewMatrix, mvpHandle, rectVertices, sunPainter);
+        rectangle = new Rectangle(0f, 0f, 0.4f, 0.2f,
+                mViewMatrix, mvpHandle, verticesHandle, colorHandle, sunColor);
     }
 
     @Override
@@ -110,7 +110,7 @@ public class BasicRenderer implements GLSurfaceView.Renderer {
         moonCircle.setProjectionMatrix(mProjectionMatrix);
         earthCircle.setProjectionMatrix(mProjectionMatrix);
         sunCircle.setProjectionMatrix(mProjectionMatrix);
-//        rectangle.setProjectionMatrix(mProjectionMatrix);
+        rectangle.setProjectionMatrix(mProjectionMatrix);
     }
 
     @Override
@@ -118,41 +118,46 @@ public class BasicRenderer implements GLSurfaceView.Renderer {
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
 
         // Do a complete rotation every 10 seconds.
-        long time = SystemClock.uptimeMillis() % 1000000L;
-        float angleInDegrees = (360.0f / 10000.0f) * ((int) time);
-        float rotationRatio = time / 2500.0f;
-
-        // Draw the triangle facing straight on.
-        float deltaX = (float) (2 * Math.sin(rotationRatio * Math.PI));
-        float deltaY = (float) (2 * Math.cos(rotationRatio * Math.PI));
-
-        earthCircle.resetModelMatrix();
-        earthCircle.scale(0.5f, 0.5f);
-        earthCircle.rotate(angleInDegrees, Axis.Z);
-        earthCircle.translate(deltaX, deltaY);
-        earthCircle.draw();
-
-        // MOON
-        // Draw the triangle facing straight on.
-        float deltaXMoon = (float) (deltaX / Math.sin(rotationRatio * Math.PI));
-        float deltaYMoon = (float) (deltaY / Math.cos(rotationRatio * Math.PI));
-
-        // Coupling the model matrix is required by the relative motion
-        moonCircle.setModelMatrix(earthCircle.getModelMatrix());
-        moonCircle.scale(0.3f, 0.3f);
-        moonCircle.translate(deltaXMoon / 2f, deltaYMoon);
-        moonCircle.draw();
-
         sunCircle.draw();
-//        rectangle.draw();
     }
 
 
     void handleTouchPress(float normalizedX, float normalizedY) {
         Log.w("TTTTT", "Touched at:" + normalizedX);
+
     }
 
     void handleTouchDrag(float normalizedX, float normalizedY) {
+        Log.w("TTTTT", "Draged at:" + normalizedX);
+    }
 
+    private int medianCounter = 0;
+    private static final int MEDIAN_ARRAY_LENGTH = 7;
+    private float[] readings = new float[MEDIAN_ARRAY_LENGTH];
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor.getType() != Sensor.TYPE_ACCELEROMETER) {
+            return;
+        }
+
+        float xAcceleration = event.values[0];
+
+        readings[medianCounter++ % MEDIAN_ARRAY_LENGTH] = xAcceleration;
+        Arrays.sort(readings);
+        medianCounter = medianCounter >= MEDIAN_ARRAY_LENGTH ? 0 : medianCounter;
+
+        sunCircle.resetModelMatrix();
+
+        float delta = mapf(readings[MEDIAN_ARRAY_LENGTH / 2], -10, 10, -1, 1);
+        sunCircle.moveTo(sunCircle.getX() - delta, 0f);
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    }
+
+    float mapf(float x, float in_min, float in_max, float out_min, float out_max) {
+        return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
     }
 }
