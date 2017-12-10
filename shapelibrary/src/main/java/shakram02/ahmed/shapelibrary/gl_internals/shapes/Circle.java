@@ -31,4 +31,23 @@ public class Circle extends DrawableObject {
     public void issueDraw() {
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, 0, raster.getItemCount());
     }
+
+
+    @Override
+    public void translate(float x, float y) {
+        super.translate(this.cx + x, this.cy + y);
+    }
+
+    public void moveTo(float x, float y) {
+        this.resetModelMatrix();
+        this.translate(x, y);
+    }
+
+    public float getX() {
+        return cx;
+    }
+
+    public float getY() {
+        return cy;
+    }
 }

@@ -20,12 +20,11 @@ public abstract class DrawableObject extends Transform {
 
     public final void draw() {
         raster.startDraw();
-        GLES20.glUniformMatrix4fv(this.mvpHandle, 1, false, super.getMvpMatrix(), 0);
+        GLES20.glUniformMatrix4fv(this.mvpHandle, 1,
+                false, super.getMvpMatrix(), 0);
         this.issueDraw();
         raster.endDraw();
     }
 
     protected abstract void issueDraw();
-
-//    public abstract boolean intersects(float x, float y);
 }

@@ -29,11 +29,11 @@ public class Transform {
         Matrix.setIdentityM(modelMatrix, 0);
     }
 
-    public final void translate(float x, float y) {
+    public void translate(float x, float y) {
         translate(x, y, 0);
     }
 
-    public final void translate(float x, float y, float z) {
+    public void translate(float x, float y, float z) {
         Matrix.translateM(modelMatrix, 0, x, y, z);
     }
 
