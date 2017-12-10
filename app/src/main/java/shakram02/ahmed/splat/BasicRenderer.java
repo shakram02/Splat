@@ -7,7 +7,6 @@ import android.hardware.SensorEventListener;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
-import android.os.SystemClock;
 import android.util.Log;
 
 import java.util.Arrays;
@@ -17,7 +16,6 @@ import javax.microedition.khronos.opengles.GL10;
 
 import shakram02.ahmed.shapelibrary.gl_internals.FrustumManager;
 import shakram02.ahmed.shapelibrary.gl_internals.memory.GLProgram;
-import shakram02.ahmed.shapelibrary.gl_internals.shapes.Axis;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Circle;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Rectangle;
 import shakram02.ahmed.splat.utils.TextResourceReader;
@@ -123,12 +121,12 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
 
 
     void handleTouchPress(float normalizedX, float normalizedY) {
-        Log.w("TTTTT", "Touched at:" + normalizedX);
+        Log.w("TTTTT", "Draged at:" + normalizedX + ", " + normalizedY);
 
     }
 
     void handleTouchDrag(float normalizedX, float normalizedY) {
-        Log.w("TTTTT", "Draged at:" + normalizedX);
+        Log.w("TTTTT", "Draged at:" + normalizedX + ", " + normalizedY);
     }
 
     private int medianCounter = 0;
@@ -149,7 +147,7 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
 
         sunCircle.resetModelMatrix();
 
-        float delta = mapf(readings[MEDIAN_ARRAY_LENGTH / 2], -10, 10, -1, 1);
+        float delta = mapFloat(readings[MEDIAN_ARRAY_LENGTH / 2], -10, 10, -1, 1);
         sunCircle.moveTo(sunCircle.getX() - delta, 0f);
     }
 
@@ -157,7 +155,8 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
 
-    float mapf(float x, float in_min, float in_max, float out_min, float out_max) {
-        return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+    private float mapFloat(float x, float inMin,
+                           float inMax, float outMin, float outMax) {
+        return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
     }
 }
