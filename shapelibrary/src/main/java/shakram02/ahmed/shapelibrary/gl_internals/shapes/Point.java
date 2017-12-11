@@ -58,4 +58,9 @@ public class Point {
         // TODO check this out
         return result;
     }
+
+    @Override
+    public String toString() {
+        return String.format("[%s, %s, %s]", x, y, z);
+    }
 }
