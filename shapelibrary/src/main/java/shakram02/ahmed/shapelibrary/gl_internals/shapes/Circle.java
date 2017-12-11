@@ -35,7 +35,7 @@ public class Circle extends DrawableObject {
 
     @Override
     public void translate(float x, float y) {
-        super.translate(this.cx + x, this.cy + y);
+        super.translate(x, y);
     }
 
     public void moveTo(float x, float y) {

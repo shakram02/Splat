@@ -9,7 +9,7 @@ import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.util.Log;
 
-import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -18,6 +18,8 @@ import shakram02.ahmed.shapelibrary.gl_internals.FrustumManager;
 import shakram02.ahmed.shapelibrary.gl_internals.memory.GLProgram;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Circle;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Rectangle;
+import shakram02.ahmed.splat.utils.ValueConstrain;
+import shakram02.ahmed.splat.utils.MedianFilter;
 import shakram02.ahmed.splat.utils.TextResourceReader;
 
 
@@ -33,6 +35,7 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
     private Circle earthCircle;
     private Circle sunCircle;
     private Rectangle rectangle;
+    private boolean surfaceReady = false;
 
     BasicRenderer(Context context) {
         this.context = context;
@@ -89,7 +92,7 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
         Integer verticesHandle = program.getVariableHandle(positionVariableName);
 
 
-        sunCircle = new Circle(0, 0, 0.38f, mViewMatrix,
+        sunCircle = new Circle(0, -0.67f, 0.12f, mViewMatrix,
                 mvpHandle, verticesHandle, colorHandle, sunColor);
         earthCircle = new Circle(0, 0, 0.32f, mViewMatrix,
                 mvpHandle, verticesHandle, colorHandle, earthColor);
@@ -105,14 +108,20 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
         //Store the projection matrix. This is used to project the scene onto a 2D viewport.
         float[] mProjectionMatrix = FrustumManager.createFrustum(0, 0, width, height);
 
+        surfaceReady = true;
         moonCircle.setProjectionMatrix(mProjectionMatrix);
         earthCircle.setProjectionMatrix(mProjectionMatrix);
         sunCircle.setProjectionMatrix(mProjectionMatrix);
         rectangle.setProjectionMatrix(mProjectionMatrix);
     }
 
+    private AtomicBoolean drawingLocked = new AtomicBoolean(true);
+
     @Override
     public void onDrawFrame(GL10 gl) {
+        if (drawingLocked.get()) {
+            return;
+        }
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
 
         // Do a complete rotation every 10 seconds.
@@ -129,26 +138,33 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
         Log.w("TTTTT", "Draged at:" + normalizedX + ", " + normalizedY);
     }
 
-    private int medianCounter = 0;
+
     private static final int MEDIAN_ARRAY_LENGTH = 7;
-    private float[] readings = new float[MEDIAN_ARRAY_LENGTH];
+    private float slideMin = -0.9f;
+    private float slideMax = 0.9f;
+    private final MedianFilter filter = new MedianFilter(MEDIAN_ARRAY_LENGTH);
+    private final ValueConstrain valueConstrain = new ValueConstrain(slideMin, slideMax);
+
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if (event.sensor.getType() != Sensor.TYPE_ACCELEROMETER) {
+        if (event.sensor.getType() != Sensor.TYPE_ACCELEROMETER || !surfaceReady) {
             return;
         }
 
         float xAcceleration = event.values[0];
+        filter.addValue(xAcceleration);
+        float medianReading = filter.getFilteredValue();
 
-        readings[medianCounter++ % MEDIAN_ARRAY_LENGTH] = xAcceleration;
-        Arrays.sort(readings);
-        medianCounter = medianCounter >= MEDIAN_ARRAY_LENGTH ? 0 : medianCounter;
+        // The range is changed to let the tilting less harsh
+        float delta = mapFloat(medianReading, -8, 8, -1, 1);
+        float clampedValue = valueConstrain.clamp(sunCircle.getX() - delta);
 
-        sunCircle.resetModelMatrix();
-
-        float delta = mapFloat(readings[MEDIAN_ARRAY_LENGTH / 2], -10, 10, -1, 1);
-        sunCircle.moveTo(sunCircle.getX() - delta, 0f);
+        // Atomic ball movement, sometimes draw is called after resetModel() which causes
+        // the ball to move to the middle
+        drawingLocked.set(true);
+        sunCircle.moveTo(clampedValue, sunCircle.getY());
+        drawingLocked.set(false);
     }
 
     @Override
