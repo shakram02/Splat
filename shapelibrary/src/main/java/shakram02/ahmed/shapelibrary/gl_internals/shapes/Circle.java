@@ -10,21 +10,12 @@ import shakram02.ahmed.shapelibrary.gl_internals.ShapeMaker;
  */
 
 public class Circle extends DrawableObject {
-    private final float cx;
-    private final float cy;
-    private final float radius;
-
     public Circle(float cx, float cy, float radius, float[] viewMatrix, int mvpHandle,
                   int verticesHandle,
                   int colorHandle, float[] colorPoints) {
-        super(mvpHandle, viewMatrix,
-                new Raster(
-                        verticesHandle, ShapeMaker.CreateCirclePoints(cx, cy, radius, 45),
-                        colorHandle, colorPoints
-                ));
-        this.cx = cx;
-        this.cy = cy;
-        this.radius = radius;
+        super(cx, cy, radius, mvpHandle, viewMatrix, verticesHandle,
+                ShapeMaker.CreateCirclePoints(cx, cy, radius, 45),
+                colorHandle, colorPoints);
     }
 
     @Override
@@ -32,22 +23,8 @@ public class Circle extends DrawableObject {
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, 0, raster.getItemCount());
     }
 
-
-    @Override
-    public void translate(float x, float y) {
-        super.translate(x, y);
-    }
-
     public void moveTo(float x, float y) {
         this.resetModelMatrix();
         this.translate(x, y);
-    }
-
-    public float getX() {
-        return cx;
-    }
-
-    public float getY() {
-        return cy;
     }
 }
