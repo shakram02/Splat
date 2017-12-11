@@ -102,7 +102,7 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
         sunCircle = new Circle(0, -0.67f, 0.12f, mViewMatrix,
                 mvpHandle, verticesHandle, colorHandle, sunColor);
 
-        enemy = new Triangle(0f, 0f, 0.06f,
+        enemy = new Triangle(0f, 0.5f, 0.06f,
                 mvpHandle, mViewMatrix, verticesHandle, colorHandle, earthColor);
 
         locationTracker.addEnemy(0.5f);
@@ -133,7 +133,7 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
 
         while (!locationTracker.isFrameDone() && locationTracker.hasEnemies()) {
             Point enemyLoc = locationTracker.getNextEnemyLocation();
-
+//            Log.i("ENEMY", enemyLoc.toString() + " at:" + time);
             enemy.resetModelMatrix();
             enemy.translate(enemyLoc.getX(), enemyLoc.getY());
             enemy.draw();

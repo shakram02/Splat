@@ -1,6 +1,7 @@
 package shakram02.ahmed.splat.game;
 
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -71,7 +72,7 @@ public class LocationTracker {
         enemyLocation = updateEnemyLocation(enemyLocation);
         enemyLocations.set(index, enemyLocation);
 
-        if (Float.compare(enemyLocation.getY(), -1.4f) < 0) {
+        if (Float.compare(enemyLocation.getY(), -2f) < 0) {
             enemyLocations.remove(index);
         }
 
