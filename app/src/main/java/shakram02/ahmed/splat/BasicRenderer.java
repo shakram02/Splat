@@ -17,10 +17,12 @@ import javax.microedition.khronos.opengles.GL10;
 import shakram02.ahmed.shapelibrary.gl_internals.FrustumManager;
 import shakram02.ahmed.shapelibrary.gl_internals.memory.GLProgram;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Circle;
-import shakram02.ahmed.shapelibrary.gl_internals.shapes.Rectangle;
-import shakram02.ahmed.splat.utils.ValueConstrain;
+import shakram02.ahmed.shapelibrary.gl_internals.shapes.Point;
+import shakram02.ahmed.shapelibrary.gl_internals.shapes.Triangle;
+import shakram02.ahmed.splat.game.LocationTracker;
 import shakram02.ahmed.splat.utils.MedianFilter;
 import shakram02.ahmed.splat.utils.TextResourceReader;
+import shakram02.ahmed.splat.utils.ValueConstrain;
 
 
 /**
@@ -31,11 +33,17 @@ import shakram02.ahmed.splat.utils.TextResourceReader;
 
 public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListener {
     private final Context context;
-    private Circle moonCircle;
-    private Circle earthCircle;
     private Circle sunCircle;
-    private Rectangle rectangle;
+    private Triangle enemy;
+
     private boolean surfaceReady = false;
+
+    private static final int MEDIAN_ARRAY_LENGTH = 7;
+    private float slideMin = -0.9f;
+    private float slideMax = 0.9f;
+    private final MedianFilter filter = new MedianFilter(MEDIAN_ARRAY_LENGTH);
+    private final ValueConstrain valueConstrain = new ValueConstrain(slideMin, slideMax);
+    private final LocationTracker locationTracker = new LocationTracker(0.009f);
 
     BasicRenderer(Context context) {
         this.context = context;
@@ -63,7 +71,6 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
 
         float earthColor[] = {0.13671875f, 0.26953125f, 0.92265625f, 1.0f};
         float sunColor[] = {0.93671875f, 0.76953125f, 0.12265625f, 1.0f};
-        float moonColor[] = {0.93671875f, 0.73671875f, 0.63671875f, 1.0f};
         float[] mViewMatrix = new float[16];
 
         Matrix.setLookAtM(mViewMatrix, 0, eyeX, eyeY, eyeZ, lookX,
@@ -94,13 +101,11 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
 
         sunCircle = new Circle(0, -0.67f, 0.12f, mViewMatrix,
                 mvpHandle, verticesHandle, colorHandle, sunColor);
-        earthCircle = new Circle(0, 0, 0.32f, mViewMatrix,
-                mvpHandle, verticesHandle, colorHandle, earthColor);
-        moonCircle = new Circle(0, 0, 0.27f, mViewMatrix,
-                mvpHandle, verticesHandle, colorHandle, moonColor);
 
-        rectangle = new Rectangle(0f, 0f, 0.4f, 0.2f,
-                mViewMatrix, mvpHandle, verticesHandle, colorHandle, sunColor);
+        enemy = new Triangle(0f, 0.5f, 0.06f,
+                mvpHandle, mViewMatrix, verticesHandle, colorHandle, earthColor);
+
+        locationTracker.addEnemy(0.5f);
     }
 
     @Override
@@ -109,10 +114,8 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
         float[] mProjectionMatrix = FrustumManager.createFrustum(0, 0, width, height);
 
         surfaceReady = true;
-        moonCircle.setProjectionMatrix(mProjectionMatrix);
-        earthCircle.setProjectionMatrix(mProjectionMatrix);
         sunCircle.setProjectionMatrix(mProjectionMatrix);
-        rectangle.setProjectionMatrix(mProjectionMatrix);
+        enemy.setProjectionMatrix(mProjectionMatrix);
     }
 
     private AtomicBoolean drawingLocked = new AtomicBoolean(true);
@@ -123,28 +126,29 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
             return;
         }
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
+        long time = System.currentTimeMillis() % 1000000L;
 
         // Do a complete rotation every 10 seconds.
         sunCircle.draw();
+
+        while (!locationTracker.isFrameDone() && locationTracker.hasEnemies()) {
+            Point enemyLoc = locationTracker.getNextEnemyLocation();
+//            Log.i("ENEMY", enemyLoc.toString() + " at:" + time);
+            enemy.resetModelMatrix();
+            enemy.translate(enemyLoc.getX(), enemyLoc.getY());
+            enemy.draw();
+        }
     }
 
 
     void handleTouchPress(float normalizedX, float normalizedY) {
         Log.w("TTTTT", "Draged at:" + normalizedX + ", " + normalizedY);
-
+        locationTracker.addEnemy(normalizedX);
     }
 
     void handleTouchDrag(float normalizedX, float normalizedY) {
         Log.w("TTTTT", "Draged at:" + normalizedX + ", " + normalizedY);
     }
-
-
-    private static final int MEDIAN_ARRAY_LENGTH = 7;
-    private float slideMin = -0.9f;
-    private float slideMax = 0.9f;
-    private final MedianFilter filter = new MedianFilter(MEDIAN_ARRAY_LENGTH);
-    private final ValueConstrain valueConstrain = new ValueConstrain(slideMin, slideMax);
-
 
     @Override
     public void onSensorChanged(SensorEvent event) {

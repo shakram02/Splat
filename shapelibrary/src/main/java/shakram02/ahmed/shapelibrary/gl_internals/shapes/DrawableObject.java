@@ -11,10 +11,17 @@ public abstract class DrawableObject extends Transform {
 
     private final int mvpHandle;
     final Raster raster;
+    private final float cx;
+    private final float cy;
+    private final float radius;
 
-    DrawableObject(int mvpHandle, float[] viewMatrix, Raster raster) {
+    DrawableObject(float cx, float cy, float radius, int mvpHandle, float[] viewMatrix, int verticesHandle, float[] vertices,
+                   int colorHandle, float[] colorPoints) {
         super(viewMatrix);
-        this.raster = raster;
+        this.cx = cx;
+        this.cy = cy;
+        this.radius = radius;
+        this.raster = new Raster(verticesHandle, vertices, colorHandle, colorPoints);
         this.mvpHandle = mvpHandle;
     }
 
@@ -27,4 +34,16 @@ public abstract class DrawableObject extends Transform {
     }
 
     protected abstract void issueDraw();
+
+    public float getX() {
+        return cx;
+    }
+
+    public float getY() {
+        return cy;
+    }
+
+    public float getRadius() {
+        return radius;
+    }
 }

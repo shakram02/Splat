@@ -15,10 +15,10 @@ public class Rectangle extends DrawableObject {
                      int verticesHandle,
                      int colorHandle, float[] colorPoints) {
 
-        super(mvpHandle, viewMatrix, new Raster(
-                verticesHandle, ShapeMaker.createRectangle(cx, cy, width, height),
+        super(cx, cy, Math.max(width, height), mvpHandle, viewMatrix, verticesHandle,
+                ShapeMaker.createRectangle(cx, cy, width, height),
                 colorHandle, colorPoints
-        ));
+        );
     }
 
     @Override
