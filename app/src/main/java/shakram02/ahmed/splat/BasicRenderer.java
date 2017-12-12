@@ -16,6 +16,7 @@ import shakram02.ahmed.shapelibrary.gl_internals.memory.GLProgram;
 import shakram02.ahmed.shapelibrary.gl_internals.motion.LowPassFilter;
 import shakram02.ahmed.shapelibrary.gl_internals.motion.MedianFilter;
 import shakram02.ahmed.shapelibrary.gl_internals.motion.NumericHelpers;
+import shakram02.ahmed.shapelibrary.gl_internals.shapes.Axis;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Circle;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Point;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Triangle;
