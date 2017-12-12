@@ -10,11 +10,11 @@ import shakram02.ahmed.shapelibrary.gl_internals.ShapeMaker;
  */
 
 public class Circle extends DrawableObject {
-    public Circle(float cx, float cy, float radius, float[] viewMatrix, int mvpHandle,
+    public Circle(float radius, float[] viewMatrix, int mvpHandle,
                   int verticesHandle,
                   int colorHandle, float[] colorPoints) {
-        super(cx, cy, radius, mvpHandle, viewMatrix, verticesHandle,
-                ShapeMaker.CreateCirclePoints(cx, cy, radius, 45),
+        super(radius, mvpHandle, viewMatrix, verticesHandle,
+                ShapeMaker.CreateCirclePoints(0, 0, radius, 45),
                 colorHandle, colorPoints);
     }
 

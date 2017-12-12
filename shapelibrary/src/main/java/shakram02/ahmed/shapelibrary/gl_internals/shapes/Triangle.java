@@ -9,11 +9,11 @@ import shakram02.ahmed.shapelibrary.gl_internals.ShapeMaker;
  */
 
 public class Triangle extends DrawableObject {
-    public Triangle(float cx, float cy, float radius, int mvpHandle, float[] viewMatrix, int verticesHandle,
+    public Triangle(float radius, int mvpHandle, float[] viewMatrix, int verticesHandle,
                     int colorHandle, float[] colorPoints) {
 
-        super(cx, cy, radius, mvpHandle, viewMatrix, verticesHandle,
-                ShapeMaker.createTriangle(cx, cy, radius),
+        super(radius, mvpHandle, viewMatrix, verticesHandle,
+                ShapeMaker.createTriangle(0, 0, radius),
                 colorHandle, colorPoints);
     }
 
