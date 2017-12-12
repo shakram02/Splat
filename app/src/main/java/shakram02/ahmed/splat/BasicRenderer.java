@@ -19,6 +19,7 @@ import shakram02.ahmed.shapelibrary.gl_internals.memory.GLProgram;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Circle;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Point;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Triangle;
+import shakram02.ahmed.splat.game.CollisionDetector;
 import shakram02.ahmed.splat.game.LocationTracker;
 import shakram02.ahmed.splat.utils.MedianFilter;
 import shakram02.ahmed.splat.utils.TextResourceReader;
@@ -39,11 +40,14 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
     private boolean surfaceReady = false;
 
     private static final int MEDIAN_ARRAY_LENGTH = 7;
+    private static final float PLAYER_RADIUS = 0.06f;
+
     private float slideMin = -0.9f;
     private float slideMax = 0.9f;
     private final MedianFilter filter = new MedianFilter(MEDIAN_ARRAY_LENGTH);
     private final ValueConstrain valueConstrain = new ValueConstrain(slideMin, slideMax);
     private final LocationTracker locationTracker = new LocationTracker(0.009f);
+    private final CollisionDetector collisionDetector = new CollisionDetector(PLAYER_RADIUS);
 
     BasicRenderer(Context context) {
         this.context = context;
@@ -53,28 +57,27 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         // Set the background clear earthColor to gray.
         GLES20.glClearColor(0.15f, 0.15f, 0.15f, 0.15f);
+        float[] mViewMatrix = new float[16];
 
-        // Position the eye behind the origin.
+        // Position the eye in front of the origin.
         final float eyeX = 0.0f;
         final float eyeY = 0.0f;
-        final float eyeZ = 1.5f;
+        final float eyeZ = 1.0001f;
 
         // We are looking toward the distance
         final float lookX = 0.0f;
         final float lookY = 0.0f;
-        final float lookZ = -5.0f;
+        final float lookZ = 0.0f;
 
         // Set our up vector. This is where our head would be pointing were we holding the camera.
         final float upX = 0.0f;
         final float upY = 1.0f;
         final float upZ = 0.0f;
 
+        Matrix.setLookAtM(mViewMatrix, 0, eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ);
+
         float earthColor[] = {0.13671875f, 0.26953125f, 0.92265625f, 1.0f};
         float sunColor[] = {0.93671875f, 0.76953125f, 0.12265625f, 1.0f};
-        float[] mViewMatrix = new float[16];
-
-        Matrix.setLookAtM(mViewMatrix, 0, eyeX, eyeY, eyeZ, lookX,
-                lookY, lookZ, upX, upY, upZ);
 
         String vertexShader = TextResourceReader
                 .readTextFileFromResource(context, R.raw.simple_vertex_shader);
@@ -99,20 +102,21 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
         Integer verticesHandle = program.getVariableHandle(positionVariableName);
 
 
-        sunCircle = new Circle(0, -0.67f, 0.12f, mViewMatrix,
+        sunCircle = new Circle(0, -1f, 0.12f, mViewMatrix,
                 mvpHandle, verticesHandle, colorHandle, sunColor);
 
-        enemy = new Triangle(0f, 0.5f, 0.06f,
+        enemy = new Triangle(0f, 0f, PLAYER_RADIUS,
                 mvpHandle, mViewMatrix, verticesHandle, colorHandle, earthColor);
 
-        locationTracker.addEnemy(0.5f);
+        locationTracker.addEnemy(0.0f);
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
+
         //Store the projection matrix. This is used to project the scene onto a 2D viewport.
         float[] mProjectionMatrix = FrustumManager.createFrustum(0, 0, width, height);
-
+        Log.w("DISPLAY INFO", "Width:" + width + "," + height);
         surfaceReady = true;
         sunCircle.setProjectionMatrix(mProjectionMatrix);
         enemy.setProjectionMatrix(mProjectionMatrix);
@@ -135,19 +139,27 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
             Point enemyLoc = locationTracker.getNextEnemyLocation();
 //            Log.i("ENEMY", enemyLoc.toString() + " at:" + time);
             enemy.resetModelMatrix();
-            enemy.translate(enemyLoc.getX(), enemyLoc.getY());
+
+            /// todo use mapf function to adjust coordinates
+            if (collisionDetector.collidesWith(new Point(sunCircle.getX(), sunCircle.getY()), enemyLoc)) {
+                Log.w("COLLISION", "BOOM!!! " + enemyLoc.toString() +
+                        " " + System.currentTimeMillis() % 1000);
+                continue;   // Don't render while colliding
+            }
+
+            enemy.moveTo(enemyLoc.getX(), enemyLoc.getY());
             enemy.draw();
         }
     }
 
 
     void handleTouchPress(float normalizedX, float normalizedY) {
-        Log.w("TTTTT", "Draged at:" + normalizedX + ", " + normalizedY);
+//        Log.w("TTTTT", "Draged at:" + normalizedX + ", " + normalizedY);
         locationTracker.addEnemy(normalizedX);
     }
 
     void handleTouchDrag(float normalizedX, float normalizedY) {
-        Log.w("TTTTT", "Draged at:" + normalizedX + ", " + normalizedY);
+//        Log.w("TTTTT", "Draged at:" + normalizedX + ", " + normalizedY);
     }
 
     @Override
