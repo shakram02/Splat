@@ -12,10 +12,14 @@ import java.util.TimerTask;
 public class SpawnEnemyTask extends TimerTask {
     private final Timer spawnTimer;
     private final LocationTracker locationTracker;
+    private final int minDelay;
+    private final int maxDelay;
 
-    public SpawnEnemyTask(Timer spawnTimer, LocationTracker locationTracker) {
+    public SpawnEnemyTask(Timer spawnTimer, LocationTracker locationTracker, int minDelay, int maxDelay) {
         this.spawnTimer = spawnTimer;
         this.locationTracker = locationTracker;
+        this.minDelay = minDelay;
+        this.maxDelay = maxDelay;
     }
 
     @Override
@@ -23,7 +27,10 @@ public class SpawnEnemyTask extends TimerTask {
         float xLocation = (float) (-0.7 + (Math.random() * (0.7 + 0.7)));
         locationTracker.addEnemy(xLocation);
 
-        long nextEnemyAfter = (long) (1000 + (Math.random() * (3200 - 250)));
-        spawnTimer.schedule(new SpawnEnemyTask(spawnTimer, locationTracker), nextEnemyAfter);
+        long nextEnemyAfter = (long) (1000 + (Math.random() * (maxDelay - minDelay)));
+        spawnTimer.schedule(
+                new SpawnEnemyTask(spawnTimer, locationTracker,
+                        minDelay, maxDelay)
+                , nextEnemyAfter);
     }
 }
