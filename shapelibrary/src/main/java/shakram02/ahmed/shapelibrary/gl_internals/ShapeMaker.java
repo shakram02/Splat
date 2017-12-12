@@ -83,15 +83,15 @@ public class ShapeMaker {
         int index = 0;
 
         points[index++] = cx;
-        points[index++] = cy - radius;
+        points[index++] = cy + radius;
         points[index++] = 0;
 
         points[index++] = cx + radius;
-        points[index++] = cy + radius;
+        points[index++] = cy - radius;
         points[index++] = 0;
 
         points[index++] = cx - radius;
-        points[index++] = cy + radius;
+        points[index++] = cy - radius;
         points[index++] = 0;
 
         return points;

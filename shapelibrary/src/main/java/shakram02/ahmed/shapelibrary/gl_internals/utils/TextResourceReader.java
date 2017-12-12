@@ -1,7 +1,8 @@
-package shakram02.ahmed.splat.utils;
+package shakram02.ahmed.shapelibrary.gl_internals.utils;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.util.TypedValue;
 
 import java.io.BufferedReader;
 import java.io.IOException;

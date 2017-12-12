@@ -68,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         mGLSurfaceView.onResume();
+        renderer.onResume();
         sensorManager.registerListener(renderer,
                 sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
                 SensorManager.SENSOR_DELAY_GAME);
@@ -77,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         mGLSurfaceView.onPause();
+        renderer.onPause();
         sensorManager.unregisterListener(renderer, sensor);
     }
 
