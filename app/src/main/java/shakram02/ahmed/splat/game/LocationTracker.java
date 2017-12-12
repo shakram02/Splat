@@ -5,7 +5,9 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Point;
 
@@ -15,13 +17,13 @@ import shakram02.ahmed.shapelibrary.gl_internals.shapes.Point;
 
 public class LocationTracker {
     private final float deltaY;
-    private ArrayList<Point> enemyLocations;
+    private List<Point> enemyLocations;
     private int index;
     private boolean doneLoop;
 
     public LocationTracker(float deltaY) {
         this.deltaY = deltaY;
-        enemyLocations = new ArrayList<>();
+        enemyLocations = Collections.synchronizedList(new ArrayList<Point>());
     }
 
     public boolean hasEnemies() {
