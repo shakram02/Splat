@@ -11,7 +11,6 @@ import android.util.Log;
 
 import java.util.Random;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -19,15 +18,15 @@ import javax.microedition.khronos.opengles.GL10;
 
 import shakram02.ahmed.shapelibrary.gl_internals.FrustumManager;
 import shakram02.ahmed.shapelibrary.gl_internals.memory.GLProgram;
+import shakram02.ahmed.shapelibrary.gl_internals.motion.LowPassFilter;
+import shakram02.ahmed.shapelibrary.gl_internals.motion.MedianFilter;
+import shakram02.ahmed.shapelibrary.gl_internals.motion.NumericHelpers;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Circle;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Point;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Triangle;
 import shakram02.ahmed.splat.game.CollisionDetector;
 import shakram02.ahmed.splat.game.LocationTracker;
-import shakram02.ahmed.splat.game.SpawnEnemyTask;
-import shakram02.ahmed.splat.utils.MedianFilter;
 import shakram02.ahmed.splat.utils.TextResourceReader;
-import shakram02.ahmed.splat.utils.ValueConstrain;
 
 
 /**
@@ -45,15 +44,17 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
 
     private static final int MEDIAN_ARRAY_LENGTH = 7;
     private static final float PLAYER_RADIUS = 0.06f;
+    private static final float PLAYER_Y_LOCATION = -0.87f;
+    private static final float ALPHA = 0.8f;
 
-    private float slideMin = -0.9f;
-    private float slideMax = 0.9f;
-    private final MedianFilter filter = new MedianFilter(MEDIAN_ARRAY_LENGTH);
-    private final ValueConstrain valueConstrain = new ValueConstrain(slideMin, slideMax);
-    private final LocationTracker locationTracker = new LocationTracker(0.009f);
+    private final MedianFilter medianFilter = new MedianFilter(MEDIAN_ARRAY_LENGTH);
+    private final LowPassFilter lowPassFilter = new LowPassFilter(ALPHA);
+
+    private final LocationTracker locationTracker = new LocationTracker(0.019f);
     private final CollisionDetector collisionDetector = new CollisionDetector(2 * PLAYER_RADIUS);
     private final Timer enemySpawner = new Timer();
     private final Random random = new Random();
+    private final Object lock = new Object();
 
     BasicRenderer(Context context) {
         this.context = context;
@@ -108,16 +109,15 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
         Integer verticesHandle = program.getVariableHandle(positionVariableName);
 
 
-        sunCircle = new Circle(0, -1f, 0.12f, mViewMatrix,
+        sunCircle = new Circle(0.12f, mViewMatrix,
                 mvpHandle, verticesHandle, colorHandle, sunColor);
+        sunCircle.setLocation(0f, PLAYER_Y_LOCATION);
 
-        enemy = new Triangle(0f, 0f, PLAYER_RADIUS,
+        enemy = new Triangle(PLAYER_RADIUS,
                 mvpHandle, mViewMatrix, verticesHandle, colorHandle, earthColor);
 
         locationTracker.addEnemy(0.0f);
     }
-
-    long last = -1;
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
@@ -128,80 +128,71 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
         sunCircle.setProjectionMatrix(mProjectionMatrix);
         enemy.setProjectionMatrix(mProjectionMatrix);
 
-        enemySpawner.schedule(new TimerTask() {
-            @Override
-            public void run() {
-
-                enemySpawner.schedule(new SpawnEnemyTask(enemySpawner, locationTracker), 100);
-            }
-        }, 2000);
+//        enemySpawner.schedule(new TimerTask() {
+//            @Override
+//            public void run() {
+//
+//                enemySpawner.schedule(new SpawnEnemyTask(enemySpawner, locationTracker), 100);
+//            }
+//        }, 2000);
     }
-
-    private AtomicBoolean drawingLocked = new AtomicBoolean(true);
 
     @Override
     public void onDrawFrame(GL10 gl) {
-        if (drawingLocked.get()) {
-            return;
-        }
+
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
 
-        // Do a complete rotation every 10 seconds.
-        sunCircle.draw();
-
-        while (!locationTracker.isFrameDone() && locationTracker.hasEnemies()) {
-            Point enemyLoc = locationTracker.getNextEnemyLocation();
+        synchronized (lock) {
+            // Do a complete rotation every 10 seconds.
+            sunCircle.draw();
+            while (!locationTracker.isFrameDone() && locationTracker.hasEnemies()) {
+                Point enemyLoc = locationTracker.getNextEnemyLocation();
 //            Log.i("ENEMY", enemyLoc.toString() + " at:" + time);
-            enemy.resetModelMatrix();
+                enemy.resetModelMatrix();
 
-            if (collisionDetector.collidesWith(new Point(sunCircle.getX(), sunCircle.getY()), enemyLoc)) {
-                Log.w("COLLISION", "BOOM!!! " + enemyLoc.toString() +
-                        " " + System.currentTimeMillis() % 1000);
-                continue;   // Don't render while colliding
+                if (collisionDetector.collidesWith(new Point(sunCircle.getX(), sunCircle.getY()), enemyLoc)) {
+                    Log.w("COLLISION", "BOOM!!! " + enemyLoc.toString() +
+                            " " + System.currentTimeMillis() % 1000);
+                    continue;   // Don't render while colliding
+                }
+
+                enemy.setLocation(enemyLoc.getX(), enemyLoc.getY());
+                enemy.draw();
             }
-
-            enemy.moveTo(enemyLoc.getX(), enemyLoc.getY());
-            enemy.draw();
         }
     }
 
 
     void handleTouchPress(float normalizedX, float normalizedY) {
-//        Log.w("TTTTT", "Draged at:" + normalizedX + ", " + normalizedY);
+        //        Log.w("TTTTT", "Draged at:" + normalizedX + ", " + normalizedY);
         locationTracker.addEnemy(normalizedX);
     }
 
     void handleTouchDrag(float normalizedX, float normalizedY) {
-//        Log.w("TTTTT", "Draged at:" + normalizedX + ", " + normalizedY);
+        //        Log.w("TTTTT", "Draged at:" + normalizedX + ", " + normalizedY);
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if (event.sensor.getType() != Sensor.TYPE_ACCELEROMETER || !surfaceReady) {
+        if (event.sensor.getType() != Sensor.TYPE_ACCELEROMETER
+                || !surfaceReady) {
             return;
         }
 
-        float xAcceleration = event.values[0];
-        filter.addValue(xAcceleration);
-        float medianReading = filter.getFilteredValue();
+        float xAcceleration = lowPassFilter.filter(event.values[0]);
 
         // The range is changed to let the tilting less harsh
-        float delta = mapFloat(medianReading, -8, 8, -1, 1);
-        float clampedValue = valueConstrain.clamp(sunCircle.getX() - delta);
+        float medianReading = medianFilter.insertAndGet(xAcceleration);
+        medianReading = NumericHelpers.mapFloat(medianReading, -10, 10, -1, 1);
 
         // Atomic ball movement, sometimes draw is called after resetModel() which causes
         // the ball to move to the middle
-        drawingLocked.set(true);
-        sunCircle.moveTo(clampedValue, sunCircle.getY());
-        drawingLocked.set(false);
+        synchronized (lock) {
+            sunCircle.setLocation(-1 * medianReading, sunCircle.getY());
+        }
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
-    }
-
-    private float mapFloat(float x, float inMin,
-                           float inMax, float outMin, float outMax) {
-        return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
     }
 }
