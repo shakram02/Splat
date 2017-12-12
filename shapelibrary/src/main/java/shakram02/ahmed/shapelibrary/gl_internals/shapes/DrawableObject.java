@@ -46,4 +46,9 @@ public abstract class DrawableObject extends Transform {
     public float getRadius() {
         return radius;
     }
+
+    public final void moveTo(float x, float y) {
+        this.resetModelMatrix();
+        this.translate(x - this.getX(), y - this.getY());
+    }
 }
