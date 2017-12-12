@@ -9,6 +9,9 @@ import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.util.Log;
 
+import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -21,6 +24,7 @@ import shakram02.ahmed.shapelibrary.gl_internals.shapes.Point;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Triangle;
 import shakram02.ahmed.splat.game.CollisionDetector;
 import shakram02.ahmed.splat.game.LocationTracker;
+import shakram02.ahmed.splat.game.SpawnEnemyTask;
 import shakram02.ahmed.splat.utils.MedianFilter;
 import shakram02.ahmed.splat.utils.TextResourceReader;
 import shakram02.ahmed.splat.utils.ValueConstrain;
@@ -47,7 +51,9 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
     private final MedianFilter filter = new MedianFilter(MEDIAN_ARRAY_LENGTH);
     private final ValueConstrain valueConstrain = new ValueConstrain(slideMin, slideMax);
     private final LocationTracker locationTracker = new LocationTracker(0.009f);
-    private final CollisionDetector collisionDetector = new CollisionDetector(PLAYER_RADIUS);
+    private final CollisionDetector collisionDetector = new CollisionDetector(2 * PLAYER_RADIUS);
+    private final Timer enemySpawner = new Timer();
+    private final Random random = new Random();
 
     BasicRenderer(Context context) {
         this.context = context;
@@ -111,6 +117,8 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
         locationTracker.addEnemy(0.0f);
     }
 
+    long last = -1;
+
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
 
@@ -119,6 +127,14 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
         surfaceReady = true;
         sunCircle.setProjectionMatrix(mProjectionMatrix);
         enemy.setProjectionMatrix(mProjectionMatrix);
+
+        enemySpawner.schedule(new TimerTask() {
+            @Override
+            public void run() {
+
+                enemySpawner.schedule(new SpawnEnemyTask(enemySpawner, locationTracker), 100);
+            }
+        }, 2000);
     }
 
     private AtomicBoolean drawingLocked = new AtomicBoolean(true);
