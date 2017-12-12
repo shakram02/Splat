@@ -33,8 +33,8 @@ import shakram02.ahmed.splat.game.MissileSummoner;
 
 public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListener {
     private final Context context;
-    private Circle sunCircle;
-    private Triangle enemy;
+    private Triangle playerShip;
+    private Circle enemy;
 
     private boolean surfaceReady = false;
 
@@ -84,8 +84,8 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
 
         Matrix.setLookAtM(mViewMatrix, 0, eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ);
 
-        float playerColor[] = {0.83671875f, 0.26953125f, 0.62265625f, 1.0f};
-        float missileColor[] = {0.83671875f, 0.76953125f, 0.12265625f, 1.0f};
+        float missileColor[] = {0.96671875f, 0.26953125f, 0.22265625f, 1.0f};
+        float playerColor[] = {0.83671875f, 0.76953125f, 0.12265625f, 1.0f};
 
         String vertexShader = TextResourceReader
                 .readTextFileFromResource(context, R.raw.simple_vertex_shader);
@@ -110,12 +110,12 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
         Integer verticesHandle = program.getVariableHandle(positionVariableName);
 
 
-        sunCircle = new Circle(0.12f, mViewMatrix,
-                mvpHandle, verticesHandle, colorHandle, playerColor);
-        sunCircle.setLocation(0f, PLAYER_Y_LOCATION);
+        playerShip = new Triangle(0.12f,
+                mvpHandle, mViewMatrix, verticesHandle, colorHandle, playerColor);
+        playerShip.setLocation(0f, PLAYER_Y_LOCATION);
 
-        enemy = new Triangle(PLAYER_RADIUS,
-                mvpHandle, mViewMatrix, verticesHandle, colorHandle, missileColor);
+        enemy = new Circle(PLAYER_RADIUS, mViewMatrix,
+                mvpHandle, verticesHandle, colorHandle, missileColor);
 
         locationTracker.addEnemy(0.0f);
     }
@@ -126,7 +126,7 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
         //Store the projection matrix. This is used to project the scene onto a 2D viewport.
         float[] mProjectionMatrix = FrustumManager.createFrustum(0, 0, width, height);
         surfaceReady = true;
-        sunCircle.setProjectionMatrix(mProjectionMatrix);
+        playerShip.setProjectionMatrix(mProjectionMatrix);
         enemy.setProjectionMatrix(mProjectionMatrix);
     }
 
@@ -136,14 +136,14 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
 
         synchronized (lock) {
-            sunCircle.draw();
+            playerShip.draw();
 
             // Update enemy locations and draw them
             while (!locationTracker.isFrameDone() && locationTracker.hasEnemies()) {
                 Point enemyLoc = locationTracker.getNextEnemyLocation();
                 enemy.resetModelMatrix();
 
-                if (collisionDetector.collidesWith(new Point(sunCircle.getX(), sunCircle.getY()), enemyLoc)) {
+                if (collisionDetector.collidesWith(new Point(playerShip.getX(), playerShip.getY()), enemyLoc)) {
                     locationTracker.removeCurrent();
                     continue;   // Don't render while colliding
                 }
@@ -180,7 +180,7 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
         // Atomic ball movement, sometimes draw is called after resetModel() which causes
         // the ball to move to the middle
         synchronized (lock) {
-            sunCircle.setLocation(-1 * medianReading, sunCircle.getY());
+            playerShip.setLocation(-1 * medianReading, playerShip.getY());
         }
     }
 
