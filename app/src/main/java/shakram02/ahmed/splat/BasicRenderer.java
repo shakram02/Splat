@@ -19,10 +19,10 @@ import shakram02.ahmed.shapelibrary.gl_internals.motion.NumericHelpers;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Circle;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Point;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Triangle;
+import shakram02.ahmed.shapelibrary.gl_internals.utils.TextResourceReader;
 import shakram02.ahmed.splat.game.CollisionDetector;
 import shakram02.ahmed.splat.game.LocationTracker;
 import shakram02.ahmed.splat.game.MissileSummoner;
-import shakram02.ahmed.splat.utils.TextResourceReader;
 
 
 /**
@@ -42,7 +42,7 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
     private static final int MISSILE_MAX_DELAY_MS = 2400;
     private static final int MISSILE_MIN_DELAY_MS = 150;
     private static final float PLAYER_RADIUS = 0.06f;
-    private static final float PLAYER_Y_LOCATION = -0.87f;
+    private static final float PLAYER_Y_LOCATION = -0.57f;
     private static final float ALPHA = 0.68f;
 
     private final MedianFilter medianFilter = new MedianFilter(MEDIAN_ARRAY_LENGTH);
