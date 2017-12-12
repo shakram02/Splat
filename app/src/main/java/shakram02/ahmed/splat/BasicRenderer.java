@@ -7,11 +7,6 @@ import android.hardware.SensorEventListener;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
-import android.util.Log;
-
-import java.util.Random;
-import java.util.Timer;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -26,6 +21,7 @@ import shakram02.ahmed.shapelibrary.gl_internals.shapes.Point;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Triangle;
 import shakram02.ahmed.splat.game.CollisionDetector;
 import shakram02.ahmed.splat.game.LocationTracker;
+import shakram02.ahmed.splat.game.MissileSummoner;
 import shakram02.ahmed.splat.utils.TextResourceReader;
 
 
@@ -43,6 +39,8 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
     private boolean surfaceReady = false;
 
     private static final int MEDIAN_ARRAY_LENGTH = 7;
+    private static final int MISSILE_MAX_DELAY_MS = 2400;
+    private static final int MISSILE_MIN_DELAY_MS = 150;
     private static final float PLAYER_RADIUS = 0.06f;
     private static final float PLAYER_Y_LOCATION = -0.87f;
     private static final float ALPHA = 0.8f;
@@ -50,20 +48,23 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
     private final MedianFilter medianFilter = new MedianFilter(MEDIAN_ARRAY_LENGTH);
     private final LowPassFilter lowPassFilter = new LowPassFilter(ALPHA);
 
-    private final LocationTracker locationTracker = new LocationTracker(0.019f);
-    private final CollisionDetector collisionDetector = new CollisionDetector(2 * PLAYER_RADIUS);
-    private final Timer enemySpawner = new Timer();
-    private final Random random = new Random();
+    private final LocationTracker locationTracker;
+    private final CollisionDetector collisionDetector;
+    private final MissileSummoner missileSummoner;
+
     private final Object lock = new Object();
 
     BasicRenderer(Context context) {
         this.context = context;
+        collisionDetector = new CollisionDetector(2 * PLAYER_RADIUS);
+        locationTracker = new LocationTracker(0.019f);
+        missileSummoner = new MissileSummoner(MISSILE_MIN_DELAY_MS, MISSILE_MAX_DELAY_MS, locationTracker);
     }
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         // Set the background clear earthColor to gray.
-        GLES20.glClearColor(0.15f, 0.15f, 0.15f, 0.15f);
+        GLES20.glClearColor(0.15f, 0.15f, 0.15f, 1f);
         float[] mViewMatrix = new float[16];
 
         // Position the eye in front of the origin.
@@ -83,8 +84,8 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
 
         Matrix.setLookAtM(mViewMatrix, 0, eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ);
 
-        float earthColor[] = {0.13671875f, 0.26953125f, 0.92265625f, 1.0f};
-        float sunColor[] = {0.93671875f, 0.76953125f, 0.12265625f, 1.0f};
+        float playerColor[] = {0.83671875f, 0.26953125f, 0.62265625f, 1.0f};
+        float missileColor[] = {0.83671875f, 0.76953125f, 0.12265625f, 1.0f};
 
         String vertexShader = TextResourceReader
                 .readTextFileFromResource(context, R.raw.simple_vertex_shader);
@@ -110,11 +111,11 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
 
 
         sunCircle = new Circle(0.12f, mViewMatrix,
-                mvpHandle, verticesHandle, colorHandle, sunColor);
+                mvpHandle, verticesHandle, colorHandle, playerColor);
         sunCircle.setLocation(0f, PLAYER_Y_LOCATION);
 
         enemy = new Triangle(PLAYER_RADIUS,
-                mvpHandle, mViewMatrix, verticesHandle, colorHandle, earthColor);
+                mvpHandle, mViewMatrix, verticesHandle, colorHandle, missileColor);
 
         locationTracker.addEnemy(0.0f);
     }
@@ -127,14 +128,6 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
         surfaceReady = true;
         sunCircle.setProjectionMatrix(mProjectionMatrix);
         enemy.setProjectionMatrix(mProjectionMatrix);
-
-//        enemySpawner.schedule(new TimerTask() {
-//            @Override
-//            public void run() {
-//
-//                enemySpawner.schedule(new SpawnEnemyTask(enemySpawner, locationTracker), 100);
-//            }
-//        }, 2000);
     }
 
     @Override
@@ -143,16 +136,14 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
 
         synchronized (lock) {
-            // Do a complete rotation every 10 seconds.
             sunCircle.draw();
+
+            // Update enemy locations and draw them
             while (!locationTracker.isFrameDone() && locationTracker.hasEnemies()) {
                 Point enemyLoc = locationTracker.getNextEnemyLocation();
-//            Log.i("ENEMY", enemyLoc.toString() + " at:" + time);
                 enemy.resetModelMatrix();
 
                 if (collisionDetector.collidesWith(new Point(sunCircle.getX(), sunCircle.getY()), enemyLoc)) {
-                    Log.w("COLLISION", "BOOM!!! " + enemyLoc.toString() +
-                            " " + System.currentTimeMillis() % 1000);
                     continue;   // Don't render while colliding
                 }
 
@@ -194,5 +185,13 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    }
+
+    void onPause() {
+        missileSummoner.stop();
+    }
+
+    void onResume() {
+        missileSummoner.run();
     }
 }
