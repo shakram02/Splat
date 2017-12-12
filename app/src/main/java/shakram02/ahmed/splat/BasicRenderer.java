@@ -116,7 +116,6 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
 
         //Store the projection matrix. This is used to project the scene onto a 2D viewport.
         float[] mProjectionMatrix = FrustumManager.createFrustum(0, 0, width, height);
-        Log.w("DISPLAY INFO", "Width:" + width + "," + height);
         surfaceReady = true;
         sunCircle.setProjectionMatrix(mProjectionMatrix);
         enemy.setProjectionMatrix(mProjectionMatrix);
@@ -130,7 +129,6 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
             return;
         }
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
-        long time = System.currentTimeMillis() % 1000000L;
 
         // Do a complete rotation every 10 seconds.
         sunCircle.draw();
@@ -140,7 +138,6 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
 //            Log.i("ENEMY", enemyLoc.toString() + " at:" + time);
             enemy.resetModelMatrix();
 
-            /// todo use mapf function to adjust coordinates
             if (collisionDetector.collidesWith(new Point(sunCircle.getX(), sunCircle.getY()), enemyLoc)) {
                 Log.w("COLLISION", "BOOM!!! " + enemyLoc.toString() +
                         " " + System.currentTimeMillis() % 1000);
