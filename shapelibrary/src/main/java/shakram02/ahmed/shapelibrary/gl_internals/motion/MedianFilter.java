@@ -1,4 +1,4 @@
-package shakram02.ahmed.splat.utils;
+package shakram02.ahmed.shapelibrary.gl_internals.motion;
 
 import java.util.Arrays;
 
@@ -19,13 +19,11 @@ public class MedianFilter {
         this.width = width;
     }
 
-    public float getFilteredValue() {
-        return buffer[width / 2];
-    }
-
-    public void addValue(float value) {
+    public float insertAndGet(float value) {
         buffer[medianCounter++ % width] = value;
         medianCounter = medianCounter >= width ? 0 : medianCounter;
         Arrays.sort(buffer);
+
+        return buffer[width / 2];
     }
 }

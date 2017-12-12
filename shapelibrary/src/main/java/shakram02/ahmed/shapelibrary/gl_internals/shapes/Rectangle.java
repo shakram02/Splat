@@ -11,12 +11,12 @@ import shakram02.ahmed.shapelibrary.gl_internals.memory.VertexBufferObject;
  */
 
 public class Rectangle extends DrawableObject {
-    public Rectangle(float cx, float cy, float width, float height, float[] viewMatrix, int mvpHandle,
+    public Rectangle(float width, float height, float[] viewMatrix, int mvpHandle,
                      int verticesHandle,
                      int colorHandle, float[] colorPoints) {
 
-        super(cx, cy, Math.max(width, height), mvpHandle, viewMatrix, verticesHandle,
-                ShapeMaker.createRectangle(cx, cy, width, height),
+        super(Math.max(width, height), mvpHandle, viewMatrix, verticesHandle,
+                ShapeMaker.createRectangle(0, 0, width, height),
                 colorHandle, colorPoints
         );
     }
