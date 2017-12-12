@@ -1,2 +1,3 @@
 # Splat
-A game that I'm not sure what it's about
+This is of course one of the most exciting games in the world where need to you avoid the flying enemies by tilting your phone sideways
+![Screenshot](assets/splat.jpg)
