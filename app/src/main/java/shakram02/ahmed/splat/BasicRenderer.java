@@ -43,7 +43,7 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
     private static final int MISSILE_MIN_DELAY_MS = 150;
     private static final float PLAYER_RADIUS = 0.06f;
     private static final float PLAYER_Y_LOCATION = -0.87f;
-    private static final float ALPHA = 0.8f;
+    private static final float ALPHA = 0.68f;
 
     private final MedianFilter medianFilter = new MedianFilter(MEDIAN_ARRAY_LENGTH);
     private final LowPassFilter lowPassFilter = new LowPassFilter(ALPHA);
@@ -144,6 +144,7 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
                 enemy.resetModelMatrix();
 
                 if (collisionDetector.collidesWith(new Point(sunCircle.getX(), sunCircle.getY()), enemyLoc)) {
+                    locationTracker.removeCurrent();
                     continue;   // Don't render while colliding
                 }
 
@@ -174,7 +175,7 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
 
         // The range is changed to let the tilting less harsh
         float medianReading = medianFilter.insertAndGet(xAcceleration);
-        medianReading = NumericHelpers.mapFloat(medianReading, -10, 10, -1, 1);
+        medianReading = NumericHelpers.mapFloat(medianReading, -10, 10, -0.9f, 0.9f);
 
         // Atomic ball movement, sometimes draw is called after resetModel() which causes
         // the ball to move to the middle

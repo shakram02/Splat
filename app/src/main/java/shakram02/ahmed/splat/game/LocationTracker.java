@@ -16,6 +16,7 @@ import shakram02.ahmed.shapelibrary.gl_internals.shapes.Point;
  */
 
 public class LocationTracker {
+    private static final float SCREEN_BOUND = -1f;
     private final float deltaY;
     private List<Point> enemyLocations;
     private int index;
@@ -74,11 +75,15 @@ public class LocationTracker {
         enemyLocation = updateEnemyLocation(enemyLocation);
         enemyLocations.set(index, enemyLocation);
 
-        if (Float.compare(enemyLocation.getY(), -1f) < 0) {
+        if (Float.compare(enemyLocation.getY(), SCREEN_BOUND) < 0) {
             enemyLocations.remove(index);
         }
 
         return returnedVal;
+    }
+
+    public void removeCurrent() {
+        enemyLocations.remove(index);
     }
 
     private Point updateEnemyLocation(Point currentLocation) {
