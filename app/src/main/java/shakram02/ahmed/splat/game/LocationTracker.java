@@ -72,7 +72,7 @@ public class LocationTracker {
         enemyLocation = updateEnemyLocation(enemyLocation);
         enemyLocations.set(index, enemyLocation);
 
-        if (Float.compare(enemyLocation.getY(), -2f) < 0) {
+        if (Float.compare(enemyLocation.getY(), -1f) < 0) {
             enemyLocations.remove(index);
         }
 
