@@ -13,7 +13,7 @@ public class MissileSummoner {
     private final int maxDelay;
     private final LocationTracker locationTracker;
     private boolean isRunning;
-    private static int INTERMEDIATE_DELAY_MS = 1000;
+    private static int INTERMEDIATE_DELAY_MS = 10;
 
     public MissileSummoner(int minDelay, int maxDelay, LocationTracker locationTracker) {
         this.minDelay = minDelay;
@@ -22,6 +22,7 @@ public class MissileSummoner {
 
     }
 
+    // TODO use locking or whatever to release a lock somewhere to fire the missile
     public void run() {
         if (isRunning) return;
         isRunning = true;
@@ -31,7 +32,7 @@ public class MissileSummoner {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                timer.schedule(new SpawnEnemyTask(timer, locationTracker,
+                timer.schedule(new SpawnEnemyTask(INTERMEDIATE_DELAY_MS, timer, locationTracker,
                         minDelay, maxDelay), INTERMEDIATE_DELAY_MS);
             }
         }, INTERMEDIATE_DELAY_MS);

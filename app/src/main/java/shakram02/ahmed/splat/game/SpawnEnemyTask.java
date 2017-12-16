@@ -1,7 +1,5 @@
 package shakram02.ahmed.splat.game;
 
-import android.util.Log;
-
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -10,12 +8,14 @@ import java.util.TimerTask;
  */
 
 public class SpawnEnemyTask extends TimerTask {
+    private final int intermediateDelayMs;
     private final Timer spawnTimer;
     private final LocationTracker locationTracker;
     private final int minDelay;
     private final int maxDelay;
 
-    public SpawnEnemyTask(Timer spawnTimer, LocationTracker locationTracker, int minDelay, int maxDelay) {
+    public SpawnEnemyTask(int intermediateDelayMs, Timer spawnTimer, LocationTracker locationTracker, int minDelay, int maxDelay) {
+        this.intermediateDelayMs = intermediateDelayMs;
         this.spawnTimer = spawnTimer;
         this.locationTracker = locationTracker;
         this.minDelay = minDelay;
@@ -27,9 +27,9 @@ public class SpawnEnemyTask extends TimerTask {
         float xLocation = (float) (-0.7 + (Math.random() * (0.7 + 0.7)));
         locationTracker.addEnemy(xLocation);
 
-        long nextEnemyAfter = (long) (1000 + (Math.random() * (maxDelay - minDelay)));
+        long nextEnemyAfter = (long) (intermediateDelayMs + (Math.random() * (maxDelay - minDelay)));
         spawnTimer.schedule(
-                new SpawnEnemyTask(spawnTimer, locationTracker,
+                new SpawnEnemyTask(intermediateDelayMs, spawnTimer, locationTracker,
                         minDelay, maxDelay)
                 , nextEnemyAfter);
     }
