@@ -21,6 +21,7 @@ public class LocationTracker {
     private List<Point> enemyLocations;
     private int index;
     private boolean doneLoop;
+    private int score = 0;
 
     public LocationTracker(float deltaY) {
         this.deltaY = deltaY;
@@ -41,13 +42,11 @@ public class LocationTracker {
         }
     }
 
-
     public void addEnemy(float[] locations) {
         for (Float p : locations) {
             this.addEnemy(p);
         }
     }
-
 
     public boolean isFrameDone() {
         boolean temp = doneLoop;
@@ -75,18 +74,28 @@ public class LocationTracker {
         enemyLocation = updateEnemyLocation(enemyLocation);
         enemyLocations.set(index, enemyLocation);
 
+        // Player passed this missile
         if (Float.compare(enemyLocation.getY(), SCREEN_BOUND) < 0) {
+            score++;
             enemyLocations.remove(index);
         }
 
         return returnedVal;
     }
 
-    public void removeCurrent() {
+    public void removeCollided() {
         enemyLocations.remove(index);
     }
 
     private Point updateEnemyLocation(Point currentLocation) {
         return new Point(currentLocation.getX(), currentLocation.getY() - deltaY);
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    public void reset() {
+        this.score = 0;
     }
 }
