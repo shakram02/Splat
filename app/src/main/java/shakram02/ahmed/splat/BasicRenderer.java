@@ -8,6 +8,8 @@ import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 
+import java.util.concurrent.LinkedBlockingQueue;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -16,14 +18,13 @@ import shakram02.ahmed.shapelibrary.gl_internals.memory.GLProgram;
 import shakram02.ahmed.shapelibrary.gl_internals.motion.LowPassFilter;
 import shakram02.ahmed.shapelibrary.gl_internals.motion.MedianFilter;
 import shakram02.ahmed.shapelibrary.gl_internals.motion.NumericHelpers;
-import shakram02.ahmed.shapelibrary.gl_internals.shapes.Axis;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Circle;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Point;
 import shakram02.ahmed.shapelibrary.gl_internals.shapes.Triangle;
 import shakram02.ahmed.shapelibrary.gl_internals.utils.TextResourceReader;
 import shakram02.ahmed.splat.game.CollisionDetector;
-import shakram02.ahmed.splat.game.LocationTracker;
 import shakram02.ahmed.splat.game.MissileSummoner;
+import shakram02.ahmed.splat.game.LocationTracker;
 
 
 /**
@@ -40,8 +41,8 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
     private boolean surfaceReady = false;
 
     private static final int MEDIAN_ARRAY_LENGTH = 7;
-    private static final int MISSILE_MAX_DELAY_MS = 2400;
-    private static final int MISSILE_MIN_DELAY_MS = 150;
+    private static final int MISSILE_MAX_DELAY_MS = 1200;
+    private static final int MISSILE_MIN_DELAY_MS = 350;
     private static final float PLAYER_RADIUS = 0.06f;
     private static final float PLAYER_Y_LOCATION = -0.57f;
     private static final float ALPHA = 0.68f;
@@ -55,8 +56,14 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
 
     private final Object lock = new Object();
 
+    private LinkedBlockingQueue<Boolean> deadQueue;
+    private boolean isDead = false;
+
+
     BasicRenderer(Context context) {
         this.context = context;
+        deadQueue = new LinkedBlockingQueue<>();
+
         collisionDetector = new CollisionDetector(2 * PLAYER_RADIUS);
         locationTracker = new LocationTracker(0.019f);
         missileSummoner = new MissileSummoner(MISSILE_MIN_DELAY_MS, MISSILE_MAX_DELAY_MS, locationTracker);
@@ -137,7 +144,7 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
 
         synchronized (lock) {
-            playerShip.draw();
+            if (!isDead) playerShip.draw();
 
             // Update enemy locations and draw them
             while (!locationTracker.isFrameDone() && locationTracker.hasEnemies()) {
@@ -145,7 +152,8 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
                 enemy.resetModelMatrix();
 
                 if (collisionDetector.collidesWith(new Point(playerShip.getX(), playerShip.getY()), enemyLoc)) {
-                    locationTracker.removeCurrent();
+                    locationTracker.removeCollided();
+                    this.setDead();
                     continue;   // Don't render while colliding
                 }
 
@@ -195,5 +203,28 @@ public class BasicRenderer implements GLSurfaceView.Renderer, SensorEventListene
 
     void onResume() {
         missileSummoner.run();
+    }
+
+    Integer getScore() throws InterruptedException {
+        return locationTracker.getScore();
+    }
+
+    private boolean isDead() {
+        return this.deadQueue.size() > 0;
+    }
+
+    private void setDead() {
+        this.isDead = true;
+        deadQueue.add(true);
+    }
+
+    public boolean getDead() throws InterruptedException {
+        return this.deadQueue.take();
+    }
+
+    public void resetGame() {
+        this.isDead = false;
+        this.deadQueue.clear();
+        this.locationTracker.reset();
     }
 }
